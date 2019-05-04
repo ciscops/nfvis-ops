@@ -1,0 +1,77 @@
+- hosts: encs
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+  roles:
+    - ansible-nfvis
+  tags:
+    - vlan
+  tasks:
+    - name: Build VLANs
+      nfvis_vlan:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        state: "{{ state }}"
+        vlan_id: "{{ item }}"
+      loop: "{{ nfvis_vlans | default([]) }}"
+
+- hosts: nfvis
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+  roles:
+    - ansible-nfvis
+  tags:
+    - network
+  tasks:
+    - name: Build Bridges
+      nfvis_bridge:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ item.key }}"
+        port: "{{ item.value.port | default(omit) }}"
+        state: "{{ state }}"
+      register: results
+      with_dict: "{{ nfvis_bridges | default({}) }}"
+
+    - name: Build Networks
+      nfvis_network:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ item.key }}"
+        bridge: "{{ item.value.bridge }}"
+        trunk: "{{ item.value.trunk | default(omit) }}"
+        vlan: "{{ item.value.vlan | default(omit) }}"
+        state: "{{ state }}"
+      register: results
+      with_dict: "{{ nfvis_networks | default({}) }}"
+
+- hosts: vnf
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+  roles:
+    - ansible-nfvis
+  tags:
+    - vnf
+  tasks:
+    - name: Build VNFs
+      nfvis_deployment:
+        host: "{{ nfvis.host }}"
+        user: "{{ nfvis_user }}"
+        password: "{{ nfvis_password }}"
+        name: "{{ nfvis.name }}"
+        state: "{{ state }}"
+        image: "{{ nfvis.image }}"
+        flavor: "{{ nfvis.flavor }}"
+        interfaces: "{{ nfvis.interfaces | default(omit) }}"
+        kpi_data: "{{ nfvis.kpi_data | default(omit) }}"
+        bootup_time: "{{ nfvis.bootup_time | default(omit) }}"
+        port_forwarding: "{{ nfvis.port_forwarding | default(omit) }}"
+        config_data: "{{ nfvis.config_data | default(omit) }}"

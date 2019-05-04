@@ -1,0 +1,68 @@
+- hosts: dut
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+    snake_tag: snake
+  roles:
+    - ansible-nfvis
+  tags:
+    - facts
+  tasks:
+  - name: Get NFVIS facts
+    nfvis_facts:
+      host: "{{ ansible_host }}"
+      user: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+    register: nfvis_facts
+
+  - set_fact:
+      snake_vnfs: "{{ nfvis_facts.deployments.deployment | selectattr('name', 'search', '^' + snake_tag + '-') | map(attribute='name') | list }}"
+
+  - set_fact:
+      snake_bridges: "{{ nfvis_facts.bridges.bridge | selectattr('name', 'search', '^' + snake_tag + '-net[0-9]') | map(attribute='name') | list }}"
+
+  - set_fact:
+      snake_networks: "{{ nfvis_facts.networks.network | selectattr('name', 'search', '^' + snake_tag + '-net[0-9]') | map(attribute='name') | list }}"
+
+  - debug:
+      msg: "Cleaning the following snake VNFs: {{ snake_vnfs | join(',') }}"
+
+  - name: Clean snake VNFs
+    nfvis_deployment:
+      host: "{{ hostvars['dut'].ansible_host }}"
+      user: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      name: "{{ item }}"
+      state: absent
+    loop: "{{ snake_vnfs | default([]) }}"
+    register: deployment_results
+    until: "'OK' in deployment_results.response"
+    retries: 6
+    delay: 10
+
+  - name: Clean snake networks
+    nfvis_network:
+      host: "{{ hostvars['dut'].ansible_host }}"
+      user: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      name: "{{ item }}"
+      state: absent
+    loop: "{{ snake_networks | default([]) }}"
+    register: network_results
+    until: "'OK' in network_results.response"
+    retries: 6
+    delay: 10
+
+  - name: Clean snake bridges
+    nfvis_bridge:
+      host: "{{ hostvars['dut'].ansible_host }}"
+      user: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      name: "{{ item }}"
+      state: absent
+    loop: "{{ snake_bridges | default([]) }}"
+    register: bridge_results
+    until: "'OK' in bridge_results.response"
+    retries: 6
+    delay: 10

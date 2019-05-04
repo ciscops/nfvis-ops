@@ -1,0 +1,162 @@
+- hosts: dut
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+    snake_tag: snake
+    max_vnf: 255
+  roles:
+    - ansible-nfvis
+  tags:
+    - facts
+  tasks:
+  - name: Get NFVIS facts
+    nfvis_facts:
+      host: "{{ ansible_host }}"
+      user: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+    register: nfvis_facts
+
+  - set_fact:
+      total_vcpus_available: "{{ nfvis_facts['cpu-info']['total-logical-cpus'] - total_vcpus_used | int }}"
+    vars:
+      total_vcpus_used: "{{ nfvis_facts['cpu-info']['logical-cpus-used-by-system'] + nfvis_facts['cpu-info']['logical-cpus-used-by-vnfs'] | int }}"
+
+#  - debug:
+#      var: nfvis_facts
+
+  - debug:
+      msg: "There are {{ total_vcpus_available }} VCPUs available for the snake test"
+
+  - name: Add VNF to inventory
+    add_host:
+      name: "{{ snake_tag }}{{ item }}"
+      group: snake_test
+      vnf_number: "{{ item }}"
+      vnf_total: "{{ total_vcpus_available }}"
+    with_sequence: count="{{ total_vcpus_available }}"
+
+- hosts: snake_test
+  connection: local
+  gather_facts: no
+  roles:
+    - ansible-nfvis
+  vars:
+    snake_tag: snake
+    wan_net: wan-net
+    lan_net: lan-net
+    lan_cidr_block: 192.168.0.0/16
+    dest_lan_cidr: "{{ lan_cidr_block | ipsubnet(24, 255) }}"
+    lan_cidr: "{{ lan_cidr_block | ipsubnet(24, 255) }}"
+    vnf_image: isrv-universalk9.16.09.01a_noll
+    vnf_flavor: isrv-small
+    vnf_template: ios/cli.j2
+    state: present
+  tasks:
+    - name: Calculate wan-net
+      set_fact:
+        wan_net: "{{ snake_tag }}-net{{ vnf_number|int - 1 }}"
+      when: vnf_number|int > 1
+
+    - name: Calculate lan-net
+      set_fact:
+        lan_net: "{{ snake_tag }}-net{{ vnf_number }}"
+        lan_cidr: "{{ lan_cidr_block | ipsubnet(24, vnf_number) }}"
+      when: vnf_number != vnf_total
+
+    - name: Calculate network addresses
+      set_fact:
+        lan_ip: "{{ lan_cidr | ipaddr(1) }}"
+        lan_route: "{{ lan_cidr | ipaddr(2) }}"
+        wan_cidr: "{{ lan_cidr_block | ipsubnet(24, vnf_number|int - 1) }}"
+        wan_ip: "{{ lan_cidr_block | ipsubnet(24, vnf_number|int - 1) | ipaddr(2) }}"
+        wan_gateway: "{{ lan_cidr_block | ipsubnet(24, vnf_number|int - 1) | ipaddr(1) }}"
+
+#    - debug:
+#        msg: "{{ vnf_number }}/{{ vnf_total }} vnf: {{ inventory_hostname }}, wan_net: {{ wan_net }}, lan_net: {{ lan_net }}, lan_cidr: {{ lan_cidr }}"
+
+    - name: Build snake bridges
+      nfvis_bridge:
+        host: "{{ hostvars['dut'].ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ lan_net }}_br"
+        state: "{{ state }}"
+      register: results
+      when: lan_net != 'lan_net'
+
+    - name: Build snake networks
+      nfvis_network:
+        host: "{{ hostvars['dut'].ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ lan_net }}"
+        bridge: "{{ lan_net }}_br"
+        state: "{{ state }}"
+      register: results
+      when: lan_net != 'lan-net'
+
+    - set_fact:
+        interfaces:
+          GigabitEthernet2:
+            enabled: true
+            ip:
+              primary: "{{ wan_ip }}"
+              gateway: "{{ wan_gateway | ipaddr('address') }}"
+
+          GigabitEthernet3:
+            enabled: true
+            ip:
+              primary: "{{ lan_ip }}"
+        router:
+          ospf:
+            id: 1
+            router_id: "{{ wan_ip }}"
+            default_information_originate: true
+            networks:
+              - network: "{{ wan_cidr }}"
+                area: 0
+              - network: "{{ lan_cidr }}"
+                area: 0
+
+#    - set_fact:
+#        static_routes:
+#          global:
+#            - network: "{{ dest_lan_cidr }}"
+#              fwd_list:
+#                - fwd: "{{ lan_route }}"
+#      when: vnf_number < vnf_total
+#
+#    - debug:
+#        var: static_routes
+#      when: vnf_number < vnf_total
+
+    - copy:
+        content: "{{ lookup('template', 'ios/cli.j2') }}"
+        dest: "{{ snake_tag }}-{{ vnf_number }}.cfg"
+
+    - name: Build snake VNFs
+      nfvis_deployment:
+        host: "{{ hostvars['dut'].ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ snake_tag }}-{{ vnf_number }}"
+        timeout: 60
+        state: "{{ state }}"
+        image: "{{ vnf_image }}"
+        flavor: "{{ vnf_flavor }}"
+        interfaces:
+          - network: int-mgmt-net
+          - network: "{{ wan_net }}"
+          - network: "{{ lan_net }}"
+        bootup_time: 600
+        port_forwarding:
+          - proxy_port: "{{ 21000 + vnf_number|int }}"
+            source_bridge: 'wan-br'
+        config_data:
+          - dst: iosxe_config.txt
+            data: "{{ lookup('template', 'ios/nfvis.j2') }}"
+      register: deployment_results
+      until: "'OK' in deployment_results.response"
+      retries: 6
+      delay: 10

@@ -1,0 +1,55 @@
+#jinja2: lstrip_blocks: True, trim_blocks: True
+version: 1
+config:
+{% if interfaces is defined %}
+   {% for key, value in interfaces.items() %}
+   - type: physical
+     name: {{ key }}
+     subnets:
+       {% if value.ip.primary == 'dhcp' %}
+        - type: dhcp
+       {% else %}
+        - type: static
+          address: {{ value.ip.primary | ipaddr('address') }}
+          netmask: {{ value.ip.primary | ipaddr('netmask') }}
+          {% if value.ip.gateway is defined %}
+          gateway: {{ value.ip.gateway }}
+          {% endif %}
+          {% if value.routes is defined %}
+          routes:
+            {% for route in value.routes | default([]) %}
+            - gateway: {{ route.gateway }}
+              network: {{ route.network | ipaddr('network') }}
+              netmask: {{ route.network | ipaddr('netmask') }}
+            {% endfor %}
+          {% endif %}{# value.routes is defined #}
+        {% endif %}{# value.ip.primary.address == 'dhcp' #}
+   {% endfor %}{# interfaces.items() #}
+{% endif %}{# interfaces is defined #}
+{##}
+{##}
+{#    {%  if static_routes.global is defined %}#}
+{#{%   for route in static_routes.global %}#}
+{#{%    for dest in route.fwd_list %}#}
+{#   - type: route#}
+{#     destination: {{ (route.prefix + '/' + route.mask) | ipaddr('network/prefix') }}#}
+{#     gateway: {{ dest.fwd }}#}
+{#     metric: {{ dest.metric | default('1') }}#}
+{#{%    endfor %}#}
+{#{%   endfor %}#}
+{#version: 2#}
+{#ethernets:#}
+{#  ens3:#}
+{#     addresses:#}
+{#     - ${NICID_0_IP_ADDRESS}/${NICID_0_NETMASK}#}
+{#     gateway4: ${NICID_0_GATEWAY}#}
+{#{% if interfaces is defined %}#}
+{#{% for key, value in interfaces.items() %}#}
+{#  {{  key }}:#}
+{#     addresses:#}
+{#     - {{ value.ip.primary.address }}/{{ value.ip.primary.mask }}#}
+{#     {% if value.ip.gateway is defined %}#}
+{#     gateway4: {{ value.ip.gateway }}#}
+{#     {%  endif %}#}
+{#{% endfor %}{# interfaces.items() #}
+{#{% endif %}#}

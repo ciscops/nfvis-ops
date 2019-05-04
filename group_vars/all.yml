@@ -1,0 +1,44 @@
+nfvis_user: admin
+nfvis_password: Cisc0123#
+#nfvis_password: !vault |
+#    $ANSIBLE_VAULT;1.1;AES256
+#    39346266376633373264646561646233346237643931306136633863633937636166316137643630
+#    6639326438316463666362623930393266373635346139620a633737333533663136666633663233
+#    38343134303831623335353336353162393666346435633038396136643631653331333534643065
+#    3438343539333164350a326462376436333763643061323137656334613732646462616335656436
+#    3462
+ansible_user: "{{ nfvis_user }}"
+ansible_password: "{{ nfvis_password }}"
+ansible_network_os: ios
+
+dns_servers:
+  - 8.8.8.8
+  - 8.8.4.4
+
+nfvis_package_list:
+#  - name: isrv
+#    image: isrv-universalk9.16.09.01a-vga.qcow2
+#    version: 16.09.01a
+#    template: isrv.image_properties.xml.j2
+  - name: isrv-universalk9.16.09.01a_noll
+    image: isrv-universalk9.16.09.01a-vga.qcow2
+    version: 16.09.01a
+    template: isrv.image_properties.xml.j2
+    options:
+      low_latency: no
+  - name: ubuntu
+    image: ubuntu_18.04.img
+    version: 18.04
+    template: ubuntu.image_properties.xml.j2
+#  - name: vedge
+#    image: viptela-edge-18.4.0-genericx86-64.qcow2
+#    version: 18.4.0
+#    template: vedge.image_properties.xml.j2
+#  - name: asav
+#    image: asav9101.qcow2
+#    version: 9.10.1
+#    template: asav.image_properties.xml.j2
+#  - name: centos
+#    image: CentOS-7-x86_64-GenericCloud-1901.qcow2
+#    version: 1901
+#    template: centos.image_properties.xml.j2

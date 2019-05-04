@@ -1,0 +1,69 @@
+- hosts: vnf
+  connection: local
+  gather_facts: no
+  roles:
+    - ansible-nfvis
+  tags:
+    - vnf
+  tasks:
+    - name: Clean VNFs
+      nfvis_deployment:
+        host: "{{ nfvis.host }}"
+        user: "{{ nfvis_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ nfvis.name }}"
+        state: absent
+
+- hosts: nfvis
+  connection: local
+  gather_facts: no
+  roles:
+    - ansible-nfvis
+  tags:
+    - network
+  tasks:
+    - name: Clean Networks
+      nfvis_network:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ item.key }}"
+        bridge: "{{ item.value.bridge }}"
+        trunk: "{{ item.value.trunk | default(omit) }}"
+        vlan: "{{ item.value.vlan | default(omit) }}"
+        state: absent
+      register: results
+      with_dict: "{{ nfvis_networks | default({}) }}"
+
+    - name: Clean Bridges
+      nfvis_bridge:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ item.key }}"
+        port: "{{ item.value.port | default(omit) }}"
+        state: absent
+      register: results
+      with_dict: "{{ nfvis_bridges | default({}) }}"
+
+- hosts: encs
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+  roles:
+    - ansible-nfvis
+  tags:
+    - network
+    - vlan
+  tasks:
+    - name: Clean VLANs
+      nfvis_vlan:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        state: absent
+        vlan_id: "{{ item }}"
+      loop: "{{ nfvis_vlans | default([]) }}"
+
+

@@ -1,0 +1,35 @@
+ansible_port: 20000
+interfaces:
+  GigabitEthernet2:
+    enabled: true
+    ip:
+      primary: 199.66.190.6/27
+  GigabitEthernet3:
+    enabled: true
+    ip:
+      primary: 192.168.0.1/24
+router:
+  ospf:
+    id: 11017
+    router_id: 199.66.190.6
+    networks:
+      - network: 199.66.190.0/27
+        area: 0
+nfvis:
+  name: "{{ inventory_hostname }}"
+  host: "{{ hostvars['harness'].ansible_host }}"
+  image: isrv
+  flavor: isrv-small
+  bootup_time: 600
+  kpi_data: yes
+  recovery_wait_time: 5
+  interfaces:
+    - network: int-mgmt-net
+    - network: GE0-0-SRIOV-1
+    - network: test-wan
+  port_forwarding:
+    - proxy_port: "{{ ansible_port }}"
+      source_bridge: 'MGMT'
+  config_data:
+    - dst: iosxe_config.txt
+      data: "{{ lookup('template', 'ios/nfvis.j2') }}"

@@ -1,0 +1,3 @@
+[submodule "roles/ansible-nfvis"]
+	path = roles/ansible-nfvis
+	url = git@github.com:CiscoDevNet/ansible-nfvis.git
