@@ -21,7 +21,7 @@ git@wwwin-github.cisco.com:ciscops/nfvis-harness.git --recursive
 
 ### Overview
 
-![test_harness](harness.png)
+![test_harness](isrv_asav_test.png)
 
 The NFVIS Harness host is used as an environment in which to deploy the PXE server and other hosts for testing (e.g. source/sync hosts, viptela control plane, etc.)
 
@@ -39,6 +39,8 @@ configuration for the architecture.  They can also be automated post deployment 
 
 The Load Test consists of a series of daisy chaned ISRvs (i.e. snake).  The number of ISRvs depends on the cores
 available on the DUT (i.e. 1 ISRv per core)
+
+![test_harness](snake_test.png)
 
 #### Build the Snake:
 `ansible-playbook build_snake.yml`
