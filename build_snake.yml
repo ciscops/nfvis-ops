@@ -25,16 +25,19 @@
 #  - debug:
 #      var: nfvis_facts
 
+  - set_fact:
+      num_snakes: "{{ total_vcpus_available|int if total_vcpus_available|int < max_vnf|int else  max_vnf|int }}"
+
   - debug:
-      msg: "There are {{ total_vcpus_available }} VCPUs available for the snake test"
+      msg: "{{ total_vcpus_available }} VCPUs available. Building {{ num_snakes }} VNF snake test"
 
   - name: Add VNF to inventory
     add_host:
       name: "{{ snake_tag }}{{ item }}"
       group: snake_test
       vnf_number: "{{ item }}"
-      vnf_total: "{{ total_vcpus_available }}"
-    with_sequence: count="{{ total_vcpus_available }}"
+      vnf_total: "{{ num_snakes }}"
+    with_sequence: start=1 end="{{ num_snakes }}"
 
 - hosts: snake_test
   connection: local
@@ -43,8 +46,10 @@
     - ansible-nfvis
   vars:
     snake_tag: snake
-    wan_net: wan-net
-    lan_net: lan-net
+    test_wan_net: test-wan
+    test_lan_net: test-lan
+    wan_net: test-wan
+    lan_net: test-lan
     lan_cidr_block: 192.168.0.0/16
     dest_lan_cidr: "{{ lan_cidr_block | ipsubnet(24, 255) }}"
     lan_cidr: "{{ lan_cidr_block | ipsubnet(24, 255) }}"
@@ -83,7 +88,7 @@
         name: "{{ lan_net }}_br"
         state: "{{ state }}"
       register: results
-      when: lan_net != 'lan_net'
+      when: lan_net != test_lan_net
 
     - name: Build snake networks
       nfvis_network:
@@ -94,7 +99,7 @@
         bridge: "{{ lan_net }}_br"
         state: "{{ state }}"
       register: results
-      when: lan_net != 'lan-net'
+      when: lan_net != test_lan_net
 
     - set_fact:
         interfaces:
@@ -131,9 +136,9 @@
 #        var: static_routes
 #      when: vnf_number < vnf_total
 
-    - copy:
-        content: "{{ lookup('template', 'ios/cli.j2') }}"
-        dest: "{{ snake_tag }}-{{ vnf_number }}.cfg"
+#    - copy:
+#        content: "{{ lookup('template', 'ios/cli.j2') }}"
+#        dest: "{{ snake_tag }}-{{ vnf_number }}.cfg"
 
     - name: Build snake VNFs
       nfvis_deployment:

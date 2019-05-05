@@ -1,0 +1,71 @@
+- hosts: dut
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+    snake_tag: snake
+  roles:
+    - ansible-nfvis
+  tasks:
+  - name: Get NFVIS facts
+    nfvis_facts:
+      host: "{{ ansible_host }}"
+      user: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+    register: nfvis_facts
+
+  - set_fact:
+      search_string: "^{{ snake_tag }}-"
+
+  - name: Add VNF to inventory
+    add_host:
+      name: "{{ item.name }}"
+      ansible_port: "{{ item.vm_group[0].interfaces.interface[0].port_forwarding.port[0].external_port_range[0].start }}"
+      ansible_host: "{{ ansible_host }}"
+      groups: snake
+    loop: "{{ nfvis_facts.deployments.deployment }}"
+    when: item.name is search("^{{ snake_tag }}-")
+
+- hosts: snake
+  gather_facts: no
+  tasks:
+    - name: Wait for VNFs to boot (timeout 10min)
+      wait_for:
+        port: "{{ ansible_port }}"
+        host: "{{ ansible_host }}"
+        timeout: 600
+      delegate_to: localhost
+
+- name: Configure licensing
+  hosts: snake
+  gather_facts: no
+  connection: network_cli
+  vars:
+    smart_licensing:
+      boot_level: ax
+      throughput_level: 2500
+      idtoken: ZjFkNzAzNmMtMmI3Ni00OTA3LTlhNTktMjgzODA4YTQyODMxLTE1ODYzMTQ5%0AMDEwMTN8MzZDaUNFczB4Z3hpbTI0M0hPUUUxckNpZFprZnpVZ2lNTUErdEk0%0Acmxxbz0%3D%0A
+  tasks:
+    - name: Set the license boot level
+      ios_config:
+        lines:
+          - "license boot level {{ smart_licensing.boot_level }}"
+          - "platform hardware throughput level MB {{ smart_licensing.throughput_level }}"
+
+    - name: Register to smart account
+      ios_command:
+        commands:
+          - "license smart register idtoken {{ smart_licensing.idtoken }}"
+
+    - name: Save configuration
+      ios_config:
+        save_when: modified
+
+    - name: Waiting for successful registration
+      ios_command:
+        commands:
+          - show license status
+      register: license_status
+      until: "'AUTHORIZED' in license_status.stdout[0]"
+      retries: 24
+      delay: 10

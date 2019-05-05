@@ -2,18 +2,18 @@
 password: {{ ansible_password }}
 chpasswd: { expire: False }
 ssh_pwauth: True
-runcmd:
-    - systemctl start rc-local
-write_files:
-    - path: /etc/rc.local
-      owner: root:root
-      permissions: '0755'
-      content: |-
-        #!/bin/sh
-        ip netns add oob
-        ip link set ens3 netns oob
-        ip netns exec oob ip link set lo up
-        ip netns exec oob ip link set ens3 up
-        ip netns exec oob ip addr add ${NICID_0_IP_ADDRESS}/24 dev ens3
-        ip netns exec oob ip route add default via ${NICID_0_GATEWAY}
+{#runcmd:#}
+{#    - systemctl start rc-local#}
+{#write_files:#}
+{#    - path: /etc/rc.local#}
+{#      owner: root:root#}
+{#      permissions: '0755'#}
+{#      content: |-#}
+{#        #!/bin/sh#}
+{#        ip netns add oob#}
+{#        ip link set ens3 netns oob#}
+{#        ip netns exec oob ip link set lo up#}
+{#        ip netns exec oob ip link set ens3 up#}
+{#        ip netns exec oob ip addr add ${NICID_0_IP_ADDRESS}/24 dev ens3#}
+{#        ip netns exec oob ip route add default via ${NICID_0_GATEWAY}#}
 {#        ip netns exec oob /usr/sbin/sshd -o PidFile=/run/sshd-oob.pid#}

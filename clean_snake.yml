@@ -19,18 +19,62 @@
   - set_fact:
       snake_vnfs: "{{ nfvis_facts.deployments.deployment | selectattr('name', 'search', '^' + snake_tag + '-') | map(attribute='name') | list }}"
 
+  - debug:
+      msg: "Cleaning the following snake VNFs: {{ snake_vnfs | join(',') }}"
+
+  - name: Add VNF to inventory
+    add_host:
+      name: "{{ item.name }}"
+      ansible_port: "{{ item.vm_group[0].interfaces.interface[0].port_forwarding.port[0].external_port_range[0].start }}"
+      ansible_host: "{{ ansible_host }}"
+      groups: snake_test
+    loop: "{{ nfvis_facts.deployments.deployment }}"
+    when: item.name is search("^{{ snake_tag }}-")
+
+- hosts: snake_test
+  connection: network_cli
+  gather_facts: no
+  roles:
+    - ansible-nfvis
+  tasks:
+    - name: Deregister from smart account
+      ios_command:
+        commands:
+          - "license smart deregister"
+
+- hosts: dut
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+    snake_tag: snake
+  roles:
+    - ansible-nfvis
+  tags:
+    - facts
+  tasks:
+  - debug:
+      var: snake_vnfs
+
+  - name: Get NFVIS facts
+    nfvis_facts:
+      host: "{{ ansible_host }}"
+      user: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+    register: nfvis_facts
+
+  - set_fact:
+      snake_vnfs: "{{ nfvis_facts.deployments.deployment | selectattr('name', 'search', '^' + snake_tag + '-') | map(attribute='name') | list }}"
+
   - set_fact:
       snake_bridges: "{{ nfvis_facts.bridges.bridge | selectattr('name', 'search', '^' + snake_tag + '-net[0-9]') | map(attribute='name') | list }}"
 
   - set_fact:
       snake_networks: "{{ nfvis_facts.networks.network | selectattr('name', 'search', '^' + snake_tag + '-net[0-9]') | map(attribute='name') | list }}"
 
-  - debug:
-      msg: "Cleaning the following snake VNFs: {{ snake_vnfs | join(',') }}"
-
   - name: Clean snake VNFs
     nfvis_deployment:
-      host: "{{ hostvars['dut'].ansible_host }}"
+      host: "{{ ansible_host }}"
       user: "{{ ansible_user }}"
       password: "{{ ansible_password }}"
       name: "{{ item }}"
@@ -43,7 +87,7 @@
 
   - name: Clean snake networks
     nfvis_network:
-      host: "{{ hostvars['dut'].ansible_host }}"
+      host: "{{ ansible_host }}"
       user: "{{ ansible_user }}"
       password: "{{ ansible_password }}"
       name: "{{ item }}"
@@ -56,7 +100,7 @@
 
   - name: Clean snake bridges
     nfvis_bridge:
-      host: "{{ hostvars['dut'].ansible_host }}"
+      host: "{{ ansible_host }}"
       user: "{{ ansible_user }}"
       password: "{{ ansible_password }}"
       name: "{{ item }}"
@@ -66,3 +110,8 @@
     until: "'OK' in bridge_results.response"
     retries: 6
     delay: 10
+
+  - name: Remove DUT from known_hosts
+    known_hosts:
+      name: "{{ ansible_host }}"
+      state: absent

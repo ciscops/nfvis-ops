@@ -21,7 +21,7 @@ nfvis:
       source_bridge: 'MGMT'
   interfaces:
     - network: int-mgmt-net
-    - network: test-wan
+    - network: test-lan
   config_data:
     - dst: meta-data
       data: "{{ lookup('template', 'ubuntu/meta-data.j2') }}"

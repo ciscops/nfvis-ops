@@ -6,12 +6,12 @@ config:
    - type: physical
      name: {{ key }}
      subnets:
-       {% if value.ip.primary.address == 'dhcp' %}
+       {% if value.ip.primary == 'dhcp' %}
         - type: dhcp
        {% else %}
         - type: static
-          address: {{ value.ip.primary.address }}
-          netmask: {{ value.ip.primary.mask }}
+          address: {{ value.ip.primary | ipaddr('address') }}
+          netmask: {{ value.ip.primary | ipaddr('netmask') }}
           {% if value.ip.gateway is defined %}
           gateway: {{ value.ip.gateway }}
           {% endif %}
@@ -19,8 +19,8 @@ config:
           routes:
             {% for route in value.routes | default([]) %}
             - gateway: {{ route.gateway }}
-              network: {{ route.network }}
-              netmask: {{ route.mask }}
+              network: {{ route.network | ipaddr('network') }}
+              netmask: {{ route.network | ipaddr('netmask') }}
             {% endfor %}
           {% endif %}{# value.routes is defined #}
           {% if dns_servers is defined %}

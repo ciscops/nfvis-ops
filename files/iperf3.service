@@ -1,0 +1,9 @@
+[Unit]
+Description=iperf3 server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/iperf3 -s --logfile /var/log/iperf.log
+
+[Install]
+WantedBy=multi-user.target

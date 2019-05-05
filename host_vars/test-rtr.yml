@@ -3,7 +3,8 @@ interfaces:
   GigabitEthernet2:
     enabled: true
     ip:
-      primary: 199.66.190.6/27
+      primary: 192.133.177.27/25
+      gateway: 192.133.177.1
   GigabitEthernet3:
     enabled: true
     ip:
@@ -25,7 +26,7 @@ nfvis:
   recovery_wait_time: 5
   interfaces:
     - network: int-mgmt-net
-    - network: GE0-0-SRIOV-1
+    - network: wan-net
     - network: test-wan
   port_forwarding:
     - proxy_port: "{{ ansible_port }}"

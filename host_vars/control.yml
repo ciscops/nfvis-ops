@@ -1,31 +1,30 @@
-ansible_host: "{{ hostvars['harness'].ansible_host }}"
-ansible_port: 20010
+ansible_host: 192.133.177.28
 ansible_user: ubuntu
 interfaces:
-  ens4:
+  ens3:
     enabled: true
     ip:
       primary: 192.133.177.28/25
       gateway: 192.133.177.1
-  ens5:
+  ens4:
     enabled: true
     ip:
       primary: 192.168.0.10/24
     routes:
       - network: 192.168.0.0/16
-        gateway: 192.168.255.1
+        gateway: 192.168.0.2
 
 nfvis:
   name: "{{ inventory_hostname }}"
   host: "{{ hostvars['harness'].ansible_host }}"
   image: ubuntu
   flavor: ubuntu-small
-  bootup_time: 600
-  port_forwarding:
-    - proxy_port: "{{ ansible_port }}"
-      source_bridge: 'MGMT'
+  bootup_time: -1
+#  port_forwarding:
+#    - proxy_port: 20010
+#      source_bridge: 'MGMT'
   interfaces:
-    - network: int-mgmt-net
+#    - network: int-mgmt-net
     - network: wan-net
     - network: test-wan
   config_data:
@@ -34,4 +33,4 @@ nfvis:
     - dst: user-data
       data: "{{ lookup('template', 'ubuntu/user-data.j2') }}"
     - dst: network-config
-      data: "{{ lookup('template', 'ubuntu/network-config.j2') }}"
+      data: "{{ lookup('template', 'ubuntu/network-config_no-mgmt.j2') }}"

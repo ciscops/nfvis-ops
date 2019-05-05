@@ -1,0 +1,21 @@
+---
+- name: Run the bandwidth tests
+  hosts: test_host
+  gather_facts: no
+  vars:
+    time: 60
+  tags:
+    - perf
+  tasks:
+    - name: Check connectivity to control host
+      command: iperf3 -c {{ hostvars['control'].interfaces.ens4.ip.primary | ipaddr('address') }} -t {{ time }} -J
+      register: iperf_command
+
+    - set_fact:
+        iperf_data: "{{ iperf_command.stdout | from_json }}"
+
+#    - debug:
+#        var: iperf_data
+
+    - debug:
+        msg: "Sent: {{ iperf_data.end.sum_sent.bits_per_second|int }}bps, Received: {{ iperf_data.end.sum_received.bits_per_second|int }}bps"
