@@ -39,7 +39,16 @@ configuration for the architecture.  They can also be automated post deployment 
 ### Load Test
 
 The Load Test consists of a series of daisy chaned ISRvs (i.e. snake).  The number of ISRvs depends on the cores
-available on the DUT (i.e. 1 ISRv per core)
+available on the DUT (i.e. 1 ISRv per core, but configurable).  The tooling below performs the following:
+
+* Creates the bridges and networks to stitch the VNFs together on the DUT
+* Instantiates the VNFs with 0-day configurations for the interface, routes, and OSPF peering.
+* Waits for the VNF to become active
+* Registers the VNF to the specified smart account and waits for it to be authorized
+* Runs a bandwith test from the test node on the harness through the snake to the control node on the harness
+* De-registers the VNF from the smart account
+* Cleans up the VNFs, bridges, and networks from the DUT
+* Cleans up the DUT's ssh host keys
 
 ![test_harness](snake_test.png)
 

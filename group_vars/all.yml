@@ -1,5 +1,5 @@
 nfvis_user: admin
-nfvis_password: XXXXXXXX
+nfvis_password: Cisc0123#
 ansible_user: "{{ nfvis_user }}"
 ansible_password: "{{ nfvis_password }}"
 ansible_network_os: ios

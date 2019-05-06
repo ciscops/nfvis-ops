@@ -157,7 +157,7 @@
         bootup_time: 600
         port_forwarding:
           - proxy_port: "{{ 21000 + vnf_number|int }}"
-            source_bridge: 'wan-br'
+            source_bridge: 'MGMT'
         config_data:
           - dst: iosxe_config.txt
             data: "{{ lookup('template', 'ios/nfvis.j2') }}"
