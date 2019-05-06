@@ -17,10 +17,15 @@
     register: nfvis_facts
 
   - set_fact:
+      deployments: "{{ nfvis_facts.deployments.deployment }}"
+    when: nfvis_facts.deployments
+
+  - set_fact:
       snake_vnfs: "{{ nfvis_facts.deployments.deployment | selectattr('name', 'search', '^' + snake_tag + '-') | map(attribute='name') | list }}"
+    when: nfvis_facts.deployments
 
   - debug:
-      msg: "Cleaning the following snake VNFs: {{ snake_vnfs | join(',') }}"
+      msg: "Cleaning the following snake VNFs: {{ snake_vnfs|default([]) | join(',') }}"
 
   - name: Add VNF to inventory
     add_host:
@@ -28,12 +33,17 @@
       ansible_port: "{{ item.vm_group[0].interfaces.interface[0].port_forwarding.port[0].external_port_range[0].start }}"
       ansible_host: "{{ ansible_host }}"
       groups: snake_test
-    loop: "{{ nfvis_facts.deployments.deployment }}"
-    when: item.name is search("^{{ snake_tag }}-")
+    loop: "{{ deployments|default([]) }}"
+    when: item.name is search(snake_regexp)
+    vars:
+      snake_regexp: '^{{ snake_tag }}-'
+
 
 - hosts: snake_test
   connection: network_cli
   gather_facts: no
+  tags:
+    - deregister
   roles:
     - ansible-nfvis
   tasks:
@@ -53,9 +63,6 @@
   tags:
     - facts
   tasks:
-  - debug:
-      var: snake_vnfs
-
   - name: Get NFVIS facts
     nfvis_facts:
       host: "{{ ansible_host }}"
@@ -65,12 +72,15 @@
 
   - set_fact:
       snake_vnfs: "{{ nfvis_facts.deployments.deployment | selectattr('name', 'search', '^' + snake_tag + '-') | map(attribute='name') | list }}"
+    when: nfvis_facts.deployments
 
   - set_fact:
       snake_bridges: "{{ nfvis_facts.bridges.bridge | selectattr('name', 'search', '^' + snake_tag + '-net[0-9]') | map(attribute='name') | list }}"
+    when: nfvis_facts.bridges
 
   - set_fact:
       snake_networks: "{{ nfvis_facts.networks.network | selectattr('name', 'search', '^' + snake_tag + '-net[0-9]') | map(attribute='name') | list }}"
+    when: nfvis_facts.networks
 
   - name: Clean snake VNFs
     nfvis_deployment:

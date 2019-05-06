@@ -1,0 +1,33 @@
+all:
+  children:
+    nfvis:
+      hosts:
+        harness1:
+          ansible_host: 192.133.180.80
+    vnf:
+      hosts:
+        pxe:
+          ansible_host: 192.133.180.67
+          ansible_user: ubuntu
+          interfaces:
+            ens3:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.133.180.67
+                  mask: 255.255.255.224
+                gateway: 192.133.180.65
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['harness1'].ansible_host }}"
+            image: ubuntu
+            flavor: ubuntu-small
+            interfaces:
+              - network: wan-net
+            config_data:
+              - dst: meta-data
+                data: "{{ lookup('template', 'ubuntu.meta-data.j2') }}"
+              - dst: user-data
+                data: "{{ lookup('template', 'ubuntu.user-data.j2') }}"
+              - dst: network-config
+                data: "{{ lookup('template', 'ubuntu.network-config_no-mgmt.j2') }}"

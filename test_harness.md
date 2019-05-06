@@ -1,4 +1,4 @@
-NFVISV Validation Harness
+# NFVIS Test Harness
 
 The NFVIS Test Harness is an NFVIS host (e.g. Cisco ENCS 5400, UCS, etc) and a set of tools used to test NFVIS on 3rd party hardware.  It can:
 
@@ -23,7 +23,8 @@ git@wwwin-github.cisco.com:ciscops/nfvis-harness.git --recursive
 
 ![test_harness](isrv_asav_test.png)
 
-The NFVIS Harness host is used as an environment in which to deploy the PXE server and other hosts for testing (e.g. source/sync hosts, viptela control plane, etc.)
+The NFVIS Harness host is used as an environment in which to deploy a PXE server, control node, test nodes, and other
+hosts for testing (e.g. source/sync hosts, viptela control plane, etc.)
 
 ### Test Scenarios
 

@@ -4,9 +4,9 @@ This repo contains tooling to automate NFVIS operations:  It can:
 
 * Create a PXE environment to install NFVIS on the test
 * Create packages and install them onto the NFVIS host
-* Deploy architectures on the the NFVIS hosts 
-* Test those architectures with packet flows
-* Clean up the architectures
+* Deploy architectures on multiple NFVIS hosts 
+* Test those architectures with packet flows with a [test harness](test_harness.md)
+* Clean up architectures multiple NFVIS hosts
 
 ### Dependancies:
 * [ansible-nfvis](https://github.com/CiscoDevNet/ansible-nfvis)
@@ -57,16 +57,14 @@ nfvis_package_list:
 Templates are found in `ansible-nfvis/templates`
 
 ##### Extra Vars:
-* 'package': only build the package with the name specified
+* `package`: only build the package with the name specified
+* `nfvis_package_dir`: location of image files used to build the packages in the directory specified by `nfvis_package_dir` (Default: `"{{ playbook_dir }}/packages"`)
+* `nfvis_temp_dir`: temp location for building packages (Default: /tmp/nfvis_packages)
+* `nfvis_package_dir`: location for storing built packages (Default: `"{{ playbook_dir }}/packages"`)
 
 ```yaml
 ansible-playbook packages.yml -e package=asav
 ```
-
-The `build-package` task looks for the image files used to build the packages in the directory specified by `nfvis_package_dir` (Default: `"{{ playbook_dir }}/packages"`).
-It builds the packages in the directory specified by `nfvis_temp_dir` (Default: /tmp/nfvis_packages) and stores the packages
-in the directory specified in `nfvis_package_dir` (Default: `"{{ playbook_dir }}/packages"`).  These values can be overrided
-as extra vars. 
 
 >Note: Since nfvis_deployment inject the config into the deployments, this task does not include any configuration.
 

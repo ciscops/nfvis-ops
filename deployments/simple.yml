@@ -1,0 +1,147 @@
+all:
+  vars:
+    nfvis_vlans:
+      - 10
+      - 11
+      - 12
+      - 14
+      - 1011
+      - 1214
+
+    nfvis_bridges:
+      service:
+#        port:
+#          - 'GE0-1'
+
+    nfvis_networks:
+      service:
+#        vlan: 10
+#        trunk: no
+        bridge: service
+  hosts:
+    dut1:
+      ansible_host: 192.133.177.18
+  children:
+    nfvis:
+      hosts:
+        dut1:
+    encs:
+      hosts:
+        dut1:
+    vnf:
+      hosts:
+        isrv1:
+          ansible_port: 20000
+          interfaces:
+            GigabitEthernet2:
+              enabled: true
+              nameif: outside
+              security_level: 0
+              ip:
+                primary:
+                  address: 192.168.1.1
+                  mask: 255.255.255.0
+            GigabitEthernet3:
+              enabled: true
+              nameif: outside
+              security_level: 0
+              ip:
+                primary:
+                  address: 192.168.2.1
+                  mask: 255.255.255.0
+
+#          static_routes:
+#            global:
+#              - prefix: 0.0.0.0
+#                mask: 0.0.0.0
+#                fwd_list:
+#                  - fwd: 209.51.164.17
+
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['dut1'].ansible_host }}"
+            image: isrv
+            flavor: isrv-small
+            bootup_time: 600
+            kpi_data: yes
+            recovery_wait_time: 5
+            interfaces:
+              - network: int-mgmt-net
+              - network: wan-net
+              - network: lan-net
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            config_data:
+              - dst: iosxe_config.txt
+                data: "{{ lookup('template', 'iosxe_config.txt.j2') }}"
+        host1:
+          ansible_port: 20001
+          ansible_user: ubuntu
+          ansible_host: "{{ hostvars['dut1'].ansible_host }}"
+          interfaces:
+            eno1:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.168.1.10
+                  mask: 255.255.255.0
+#                gateway: 192.168.1.1
+
+          routes:
+            - network: 192.168.0.0
+              mask: 255.255.0.0
+              gateway: 192.168.1.1
+
+          nfvis:
+            name: host1
+            host: "{{ hostvars['dut1'].ansible_host }}"
+            image: centos
+            flavor: centos-small
+            bootup_time: 600
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            interfaces:
+              - network: int-mgmt-net
+              - network: wan-net
+            config_data:
+              - dst: openstack/latest/meta_data.json
+                data: "'{{ lookup('template', 'openstack.meta_data.json.j2') }}'"
+              - dst: openstack/latest/user_data
+                data: "{{ lookup('template', 'openstack.user_data.j2') }}"
+        host2:
+          ansible_port: 20002
+          ansible_host: "{{ hostvars['dut1'].ansible_host }}"
+          ansible_user: ubuntu
+          interfaces:
+            eno1:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.168.2.10
+                  mask: 255.255.255.0
+#                gateway: 192.168.2.1
+
+          routes:
+            - network: 192.168.0.0
+              mask: 255.255.0.0
+              gateway: 192.168.2.1
+
+          nfvis:
+            name: host2
+            host: "{{ hostvars['dut1'].ansible_host }}"
+            image: centos
+            flavor: centos-small
+            bootup_time: 600
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            interfaces:
+              - network: int-mgmt-net
+              - network: lan-net
+            config_data:
+              - dst: openstack/latest/meta_data.json
+                data: "'{{ lookup('template', 'openstack.meta_data.json.j2') }}'"
+              - dst: openstack/latest/user_data
+                data: "{{ lookup('template', 'openstack.user_data.j2') }}"

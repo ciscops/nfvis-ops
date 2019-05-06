@@ -1,0 +1,48 @@
+all:
+  hosts:
+    dut1:
+      ansible_host: 192.133.180.94
+  children:
+    nfvis:
+      hosts:
+        dut1:
+#    encs:
+#      hosts:
+#        dut1:
+    vnf:
+      hosts:
+        host3:
+          ansible_port: 20003
+          ansible_user: centos
+          ansible_host: "{{ hostvars['dut1'].ansible_host }}"
+          interfaces:
+            eno1:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.168.1.11
+                  mask: 255.255.255.0
+#                gateway: 192.168.1.1
+
+          routes:
+            - network: 192.168.0.0
+              mask: 255.255.0.0
+              gateway: 192.168.1.1
+
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['dut1'].ansible_host }}"
+            image: centos
+            flavor: centos-small
+            bootup_time: 600
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            interfaces:
+              - network: int-mgmt-net
+              - network: wan-net
+#            config_data:
+#              - dst: openstack/latest/meta_data.json
+#                data: "{{ lookup('template', 'openstack.meta_data.json.j2') }}"
+#              - dst: openstack/latest/user_data
+#                data: "{{ lookup('template', 'openstack.user_data.j2') }}"

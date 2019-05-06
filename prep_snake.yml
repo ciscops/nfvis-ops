@@ -67,5 +67,5 @@
           - show license status
       register: license_status
       until: "'AUTHORIZED' in license_status.stdout[0]"
-      retries: 24
+      retries: 60
       delay: 10

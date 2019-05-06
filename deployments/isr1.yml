@@ -1,0 +1,122 @@
+all:
+  hosts:
+    dut1:
+      ansible_host: 192.133.180.91
+  children:
+    nfvis:
+      hosts:
+        dut1:
+#    encs:
+#      hosts:
+#        dut1:
+    control_host:
+      hosts:
+        host1
+    test_host:
+      hosts:
+        host2
+    vnf:
+      hosts:
+        isrv1:
+          ansible_port: 20000
+          interfaces:
+            GigabitEthernet2:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.168.0.1
+                  mask: 255.255.255.0
+            GigabitEthernet3:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.168.2.1
+                  mask: 255.255.255.0
+
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['dut1'].ansible_host }}"
+            image: isrv
+            flavor: isrv-small
+            bootup_time: 600
+            kpi_data: yes
+            recovery_wait_time: 5
+            interfaces:
+              - network: int-mgmt-net
+              - network: wan-net
+              - network: lan-net
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            config_data:
+              - dst: iosxe_config.txt
+                data: "{{ lookup('template', 'iosxe_config.txt.j2') }}"
+        host1:
+          ansible_host: "{{ hostvars['dut1'].ansible_host }}"
+          ansible_port: 20010
+          ansible_user: ubuntu
+          interfaces:
+            ens4:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.168.2.10
+                  mask: 255.255.255.0
+              routes:
+                - network: 192.168.0.0
+                  mask: 255.255.0.0
+                  gateway: 192.168.2.1
+
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['dut1'].ansible_host }}"
+            image: ubuntu
+            flavor: ubuntu-small
+            bootup_time: 600
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            interfaces:
+              - network: int-mgmt-net
+              - network: lan-net
+            config_data:
+              - dst: meta-data
+                data: "{{ lookup('template', 'ubuntu.meta-data.j2') }}"
+              - dst: user-data
+                data: "{{ lookup('template', 'ubuntu.user-data.j2') }}"
+              - dst: network-config
+                data: "{{ lookup('template', 'ubuntu.network-config.j2') }}"
+        host2:
+          ansible_port: 20011
+          ansible_host: 192.168.0.10
+          interfaces:
+            ens4:
+              enabled: true
+              ip:
+                primary:
+                  address: 192.168.0.10
+                  mask: 255.255.255.0
+              routes:
+                - network: 192.168.0.0
+                  mask: 255.255.0.0
+                  gateway: 192.168.0.1
+
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['dut1'].ansible_host }}"
+            image: ubuntu
+            flavor: ubuntu-small
+            bootup_time: 600
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            interfaces:
+              - network: int-mgmt-net
+              - network: wan-net
+            config_data:
+              - dst: meta-data
+                data: "{{ lookup('template', 'ubuntu.meta-data.j2') }}"
+              - dst: user-data
+                data: "{{ lookup('template', 'ubuntu.user-data.j2') }}"
+              - dst: network-config
+                data: "{{ lookup('template', 'ubuntu.network-config.j2') }}"
