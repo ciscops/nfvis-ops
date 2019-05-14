@@ -1,0 +1,5 @@
+{% if nat is defined %}
+{%   for nat_rule in nat %}
+ip nat {{ nat_rule.type }} source {{ nat_rule.source }} {{ nat_rule.list }} interface {{ nat_rule.interface }} {{ 'overload' if nat_rule.overload is defined else '' }}
+{%   endfor %}
+{% endif %}

@@ -53,9 +53,8 @@
           - "platform hardware throughput level MB {{ smart_licensing.throughput_level }}"
 
     - name: Register to smart account
-      ios_command:
-        commands:
-          - "license smart register idtoken {{ smart_licensing.idtoken }}"
+      cli_command:
+        command: "license smart register idtoken {{ smart_licensing.idtoken }}"
 
     - name: Save configuration
       ios_config:

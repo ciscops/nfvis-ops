@@ -1,0 +1,10 @@
+{% if access_lists is defined %}
+{%  for list in access_lists%}
+{%    if list.type == 'standard' %}
+ip access-list standard {{ list.name }}
+{%      for rule in list.rules %}
+ {{ rule.action }} {{ rule.source | ipaddr('network') }} {{ rule.source | ipaddr('hostmask') }}
+{%      endfor %}
+{%    endif %}
+{%  endfor %}
+{% endif %}

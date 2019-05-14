@@ -32,13 +32,13 @@ all:
               enabled: true
               ip:
                 primary:
-                  address: 192.168.0.1
+                  address: 192.168.0.2
                   mask: 255.255.255.0
             GigabitEthernet3:
               enabled: true
               ip:
                 primary:
-                  address: 192.168.1.1
+                  address: 192.168.255.1
                   mask: 255.255.255.0
 
           static_routes:
@@ -114,72 +114,72 @@ all:
             config_data:
               - dst: day0-config
                 data: "{{ lookup('template', 'asav.cfg.j2') }}"
-        host1:
-          ansible_host: "{{ hostvars['harness1'].ansible_host }}"
-          ansible_port: 20010
-          ansible_user: ubuntu
-          interfaces:
-            ens4:
-              enabled: true
-              ip:
-                primary:
-                  address: 192.168.2.10
-                  mask: 255.255.255.0
-              routes:
-                - network: 192.168.0.0
-                  mask: 255.255.0.0
-                  gateway: 192.168.2.1
-
-          nfvis:
-            name: "{{ inventory_hostname }}"
-            host: "{{ hostvars['harness1'].ansible_host }}"
-            image: ubuntu
-            flavor: ubuntu-small
-            bootup_time: 600
-            port_forwarding:
-              - proxy_port: "{{ ansible_port }}"
-                source_bridge: 'wan-br'
-            interfaces:
-              - network: int-mgmt-net
-              - network: lan-net
-            config_data:
-              - dst: meta-data
-                data: "{{ lookup('template', 'ubuntu.meta-data.j2') }}"
-              - dst: user-data
-                data: "{{ lookup('template', 'ubuntu.user-data.j2') }}"
-              - dst: network-config
-                data: "{{ lookup('template', 'ubuntu.network-config.j2') }}"
-        host2:
-          ansible_port: 20011
-          ansible_host: 192.168.0.10
-          interfaces:
-            ens4:
-              enabled: true
-              ip:
-                primary:
-                  address: 192.168.0.10
-                  mask: 255.255.255.0
-              routes:
-                - network: 192.168.0.0
-                  mask: 255.255.0.0
-                  gateway: 192.168.0.1
-
-          nfvis:
-            name: "{{ inventory_hostname }}"
-            host: "{{ hostvars['harness1'].ansible_host }}"
-            image: ubuntu
-            flavor: ubuntu-small
-            bootup_time: 600
-            port_forwarding:
-              - proxy_port: "{{ ansible_port }}"
-                source_bridge: 'wan-br'
-            interfaces:
-              - network: int-mgmt-net
-              - network: wan-net
-            config_data:
-              - dst: meta-data
-                data: "{{ lookup('template', 'ubuntu.meta-data.j2') }}"
-              - dst: user-data
-                data: "{{ lookup('template', 'ubuntu.user-data.j2') }}"
-              - dst: network-config
-                data: "{{ lookup('template', 'ubuntu.network-config.j2') }}"
+#        host1:
+#          ansible_host: "{{ hostvars['harness1'].ansible_host }}"
+#          ansible_port: 20010
+#          ansible_user: ubuntu
+#          interfaces:
+#            ens4:
+#              enabled: true
+#              ip:
+#                primary:
+#                  address: 192.168.2.10
+#                  mask: 255.255.255.0
+#              routes:
+#                - network: 192.168.0.0
+#                  mask: 255.255.0.0
+#                  gateway: 192.168.2.1
+#
+#          nfvis:
+#            name: "{{ inventory_hostname }}"
+#            host: "{{ hostvars['harness1'].ansible_host }}"
+#            image: ubuntu
+#            flavor: ubuntu-small
+#            bootup_time: 600
+#            port_forwarding:
+#              - proxy_port: "{{ ansible_port }}"
+#                source_bridge: 'wan-br'
+#            interfaces:
+#              - network: int-mgmt-net
+#              - network: lan-net
+#            config_data:
+#              - dst: meta-data
+#                data: "{{ lookup('template', 'ubuntu.meta-data.j2') }}"
+#              - dst: user-data
+#                data: "{{ lookup('template', 'ubuntu.user-data.j2') }}"
+#              - dst: network-config
+#                data: "{{ lookup('template', 'ubuntu.network-config.j2') }}"
+#        host2:
+#          ansible_port: 20011
+#          ansible_host: 192.168.0.10
+#          interfaces:
+#            ens4:
+#              enabled: true
+#              ip:
+#                primary:
+#                  address: 192.168.0.10
+#                  mask: 255.255.255.0
+#              routes:
+#                - network: 192.168.0.0
+#                  mask: 255.255.0.0
+#                  gateway: 192.168.0.1
+#
+#          nfvis:
+#            name: "{{ inventory_hostname }}"
+#            host: "{{ hostvars['harness1'].ansible_host }}"
+#            image: ubuntu
+#            flavor: ubuntu-small
+#            bootup_time: 600
+#            port_forwarding:
+#              - proxy_port: "{{ ansible_port }}"
+#                source_bridge: 'wan-br'
+#            interfaces:
+#              - network: int-mgmt-net
+#              - network: wan-net
+#            config_data:
+#              - dst: meta-data
+#                data: "{{ lookup('template', 'ubuntu.meta-data.j2') }}"
+#              - dst: user-data
+#                data: "{{ lookup('template', 'ubuntu.user-data.j2') }}"
+#              - dst: network-config
+#                data: "{{ lookup('template', 'ubuntu.network-config.j2') }}"

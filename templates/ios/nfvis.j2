@@ -31,6 +31,16 @@ interface GigabitEthernet1
 
 ip route vrf Mgmt-intf 0.0.0.0 0.0.0.0 ${NICID_0_GATEWAY}
 !
+{# ------------- #}
+{# Acess Lists   #}
+{# ------------- #}
+{{ lookup('template', 'ios/cli/access-lists.j2') }}
+!
+{# ------------- #}
+{# NAT           #}
+{# ------------- #}
+{{ lookup('template', 'ios/cli/nat.j2') }}
+!
 {# ----------------- #}
 {# Routing Protocols #}
 {# ----------------- #}

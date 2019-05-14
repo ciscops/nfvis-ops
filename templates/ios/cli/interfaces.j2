@@ -9,6 +9,9 @@ interface {{ key }}
 {%  if value.description is defined %}
  description {{ value.description }}
 {%  endif %}
+{%  if value.nat is defined %}
+ ip nat {{ value.nat }}
+{%  endif %}
 {%  if value.ip.primary.address is defined %}
  ip address {{ value.ip.primary.address }} {{ value.ip.primary.mask }}
 {%  endif %}

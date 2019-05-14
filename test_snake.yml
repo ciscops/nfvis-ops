@@ -2,20 +2,39 @@
 - name: Run the bandwidth tests
   hosts: test_host
   gather_facts: no
+  roles:
+    - ansible-nfvis
   vars:
     time: 60
   tags:
     - perf
   tasks:
-    - name: Check connectivity to control host
+    - name: Run bandwidth test to control host
       command: iperf3 -c {{ hostvars['control'].interfaces.ens4.ip.primary | ipaddr('address') }} -t {{ time }} -J
       register: iperf_command
 
     - set_fact:
         iperf_data: "{{ iperf_command.stdout | from_json }}"
 
-#    - debug:
-#        var: iperf_data
-
     - debug:
         msg: "Sent: {{ iperf_data.end.sum_sent.bits_per_second|int }}bps, Received: {{ iperf_data.end.sum_received.bits_per_second|int }}bps"
+
+    - name: Get NFVIS facts
+      nfvis_facts:
+        host: "{{ hostvars['dut'].ansible_host }}"
+        user: "{{ nfvis_user }}"
+        password: "{{ nfvis_password }}"
+      register: nfvis_facts
+      delegate_to: localhost
+
+    - name: Create report
+      set_fact:
+        test_report:
+          nfvis_facts: "{{ nfvis_facts }}"
+          iperf_data: "{{ iperf_data }}"
+
+    - name: Write out report
+      copy:
+        dest: "{{ nfvis_facts['platform-detail']['hardware_info']['PID'] }}_snake_results.json"
+        content: "{{ test_report | to_nice_json }}"
+      delegate_to: localhost

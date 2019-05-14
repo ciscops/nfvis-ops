@@ -2,19 +2,36 @@ ansible_port: 20000
 interfaces:
   GigabitEthernet2:
     enabled: true
+    nat: outside
     ip:
       primary: 192.133.177.27/25
       gateway: 192.133.177.1
   GigabitEthernet3:
     enabled: true
+    nat: inside
     ip:
       primary: 192.168.0.1/24
+
+nat:
+  - type: inside
+    source: list
+    list: nat
+    interface: GigabitEthernet2
+    overload: true
+
+access_lists:
+  - name: nat
+    type: standard
+    rules:
+      - action: permit
+        source: 192.168.0.0/16
+
 router:
   ospf:
-    id: 11017
-    router_id: 199.66.190.6
+    id: 1
+    router_id: 192.168.0.1
     networks:
-      - network: 199.66.190.0/27
+      - network: 192.168.0.0/24
         area: 0
 nfvis:
   name: "{{ inventory_hostname }}"
