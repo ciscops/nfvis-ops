@@ -8,21 +8,35 @@ This repo contains tooling to automate NFVIS operations:  It can:
 * Test those architectures with packet flows with a [test harness](test_harness.md)
 * Clean up architectures multiple NFVIS hosts
 
-### Dependancies:
-* [ansible-nfvis](https://github.com/CiscoDevNet/ansible-nfvis)
+## Dependancies:
+* [ansible-nfvis](https://github.com/CiscoDevNet/ansible-nfvis) (installed with repo)
 
-### Cloning
+### PIP
+```
+pip install -r requirements.txt
+```
+>Note: It is recommended this be done in a python virtual environment
+
+## Cloning
 
 Since `ansible-nfvis` is included as a submodule, a recurse close is needed:
 
 ```yaml
-git@wwwin-github.cisco.com:ciscops/nfvis-harness.git --recursive
+git clone --recursive git@github.com:CiscoDevNet/nfvis-ops.git
 ```
 
 >Note: See the [ansible-nfvis](https://github.com/CiscoDevNet/ansible-nfvis) Ansible Role for an explanation of the attributes.
 
+## Credentials
+The playbook and roles contained herein assume the following credentials are set:
 
-### Building Packages
+* `ansible_user`: The username to use for NFVIS and/or the VNFs
+* `ansible_password`: The password to use for NFVIS and/or the VNFs
+* `license_token`: The Smart License token to be used when licesing is required
+
+>Note: It is recommented that these values be encrypted with Ansible Vault.
+
+## Building Packages
 ```yaml
 ansible-playbook packages.yml
 ```
@@ -118,14 +132,14 @@ nfvis_networks:
 * 'packages': Just run the play to upload the packages
 
 ```yaml
-ansible-playbook -i inventory/isr_asa1.yml provision.yml --tags=upload
+ansible-playbook -i inventory/isr_asa1.yml provision.yml --tags=packages
 ```
 
 ##### Extra Vars:
 * 'package': only build the package with the name specified
 
 ```yaml
-ansible-playbook -i inventory/isr_asa1.yml provision.yml --tags=upload -e package=asav
+ansible-playbook -i inventory/isr_asa1.yml provision.yml --tags=packages -e package=asav
 ```
 
 ### Build a topology

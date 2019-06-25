@@ -1,0 +1,18 @@
+nfvis:
+  name: "{{ inventory_hostname }}"
+  host: "{{ hostvars['harness'].ansible_host }}"
+  image: isrv
+  flavor: isrv-small
+  bootup_time: 600
+  kpi_data: yes
+  recovery_wait_time: 5
+  interfaces:
+    - network: int-mgmt-net
+    - network: wan-net
+    - network: test-wan
+  port_forwarding:
+    - proxy_port: "{{ ansible_port }}"
+      source_bridge: 'MGMT'
+  config_data:
+    - dst: iosxe_config.txt
+      data: "{{ lookup('template', 'ios/nfvis.j2') }}"

@@ -1,0 +1,24 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+  tags:
+    - build
+  tasks:
+    - name: Limit to specific package
+      set_fact:
+        nfvis_package_list: "{{ nfvis_package_list | selectattr('name', 'equalto', package) | list }}"
+      when: package is defined
+
+    - name: Build packages
+      include_role:
+        name: ansible-nfvis
+        tasks_from: build-package
+      vars:
+        package_name: "{{ item.name }}"
+        package_version: "{{ item.version }}"
+        package_image: "{{ item.image }}"
+        package_template: "{{ item.template }}"
+        package_options: "{{ item.options | default(omit) }}"
+      loop: "{{ nfvis_package_list }}"

@@ -1,0 +1,113 @@
+- hosts: nfvis
+  gather_facts: no
+  connection: local
+  tags:
+    - network
+  roles:
+    - ansible-nfvis
+  tasks:
+    - name: Build Bridges
+      nfvis_bridge:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ item.key }}"
+        ports: "{{ item.value.ports | default(omit) }}"
+        purge: "{{ item.value.purge | default(omit) }}"
+        state: "{{ item.value.state | default('present') }}"
+      register: results
+      with_dict: "{{ nfvis_bridges | default({}) }}"
+
+    - name: Build Networks
+      nfvis_network:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        name: "{{ item.key }}"
+        bridge: "{{ item.value.bridge }}"
+        trunk: "{{ item.value.trunk | default(omit) }}"
+        vlan: "{{ item.value.vlan | default(omit) }}"
+        state: "{{ item.value.state | default('present') }}"
+      register: results
+      with_dict: "{{ nfvis_networks | default({}) }}"
+
+- hosts: encs
+  connection: local
+  gather_facts: no
+  vars:
+    state: present
+  roles:
+    - ansible-nfvis
+  tags:
+    - network
+    - vlan
+  tasks:
+    - name: Build VLANs
+      nfvis_vlan:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        state: "{{ state }}"
+        vlan_id: "{{ item }}"
+      loop: "{{ nfvis_vlans | default([]) }}"
+
+- hosts: nfvis
+  connection: local
+  gather_facts: no
+  roles:
+    - ansible-nfvis
+  tags:
+    - system
+  tasks:
+    - assert:
+        that:
+          - interfaces.mgmt.ip.primary is defined
+          - interfaces.mgmt.ip.gateway is defined
+        msg: "You must specfy the management address/gateway for the device"
+
+#    - set_fact:
+#        mgmt_cidr: "{{ ip | ipaddr('address/prefix') }}"
+#      vars:
+#        ip: "{{ interfaces.mgmt.ip.primary.address }}/{{ interfaces.mgmt.ip.primary.mask }}"
+
+    - name: Configure system
+      nfvis_system:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        hostname: "{{ inventory_hostname }}"
+        mgmt: "{{ interfaces.mgmt.ip.primary }}"
+        default_gw: "{{ interfaces.mgmt.ip.gateway | default(omit) }}"
+        trusted_source:
+          - 0.0.0.0/0
+      register: results
+      delegate_to: localhost
+
+- hosts: nfvis
+  gather_facts: no
+  connection: local
+  vars:
+    state: present
+  tags:
+    - packages
+    - upload
+  roles:
+    - ansible-nfvis
+  tasks:
+    - name: Limit to specific package
+      set_fact:
+        nfvis_package_list: "{{ nfvis_package_list | selectattr('name', 'equalto', package) | list }}"
+      when: package is defined
+
+    - name: Package
+      nfvis_package:
+        host: "{{ ansible_host }}"
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        file: "{{ nfvis_package_dir }}/{{ item.name }}.tar.gz"
+        name: "{{ item.name }}"
+        state: "{{ item.state | default(state) }}"
+      register: upload_results
+      loop: "{{ nfvis_package_list }}"
+      delegate_to: localhost
+

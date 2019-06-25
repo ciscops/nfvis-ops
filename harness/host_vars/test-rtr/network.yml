@@ -1,0 +1,21 @@
+nat:
+  - type: inside
+    source: list
+    list: nat
+    interface: GigabitEthernet2
+    overload: true
+
+access_lists:
+  - name: nat
+    type: standard
+    rules:
+      - action: permit
+        source: 192.168.0.0/16
+        
+router:
+  ospf:
+    id: 1
+    router_id: 192.168.0.1
+    networks:
+      - network: 192.168.0.0/24
+        area: 0

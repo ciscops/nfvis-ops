@@ -44,7 +44,7 @@
     smart_licensing:
       boot_level: ax
       throughput_level: 2500
-      idtoken: ZjFkNzAzNmMtMmI3Ni00OTA3LTlhNTktMjgzODA4YTQyODMxLTE1ODYzMTQ5%0AMDEwMTN8MzZDaUNFczB4Z3hpbTI0M0hPUUUxckNpZFprZnpVZ2lNTUErdEk0%0Acmxxbz0%3D%0A
+      idtoken: "{{ license_token }}"
   tasks:
     - name: Set the license boot level
       ios_config:

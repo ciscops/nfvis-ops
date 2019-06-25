@@ -1,13 +1,3 @@
-nfvis_user: admin
-nfvis_password: Cisc0123#
-ansible_user: "{{ nfvis_user }}"
-ansible_password: "{{ nfvis_password }}"
-ansible_network_os: ios
-
-dns_servers:
-  - 8.8.8.8
-  - 8.8.4.4
-
 nfvis_package_list:
   - name: isrv_16.09.01a
     image: isrv-universalk9.16.09.01a-vga.qcow2
@@ -23,17 +13,17 @@ nfvis_package_list:
     image: asav9101.qcow2
     version: 9.10.1
     template: asav.image_properties.xml.j2
-  - name: isrv
-    image: isrv-universalk9.16.09.01a-vga.qcow2
-    version: 16.09.01a
-    template: isrv.image_properties.xml.j2
-  - name: isrv-universalk9.16.09.01a_noll
-    image: isrv-universalk9.16.09.01a-vga.qcow2
-    version: 16.09.01a
-    template: isrv.image_properties.xml.j2
-    options:
-      low_latency: no
-    state: absent
+  # - name: isrv
+  #   image: isrv-universalk9.16.09.01a-vga.qcow2
+  #   version: 16.09.01a
+  #   template: isrv.image_properties.xml.j2
+  # - name: isrv-universalk9.16.09.01a_noll
+  #   image: isrv-universalk9.16.09.01a-vga.qcow2
+  #   version: 16.09.01a
+  #   template: isrv.image_properties.xml.j2
+  #   options:
+  #     low_latency: no
+  #   state: absent
   - name: ubuntu
     image: ubuntu_18.04.img
     version: 18.04
@@ -42,11 +32,11 @@ nfvis_package_list:
 #    image: viptela-edge-18.4.0-genericx86-64.qcow2
 #    version: 18.4.0
 #    template: vedge.image_properties.xml.j2
-  - name: asav
-    image: asav9101.qcow2
-    version: 9.10.1
-    template: asav.image_properties.xml.j2
-    state: absent
+  # - name: asav
+  #   image: asav9101.qcow2
+  #   version: 9.10.1
+  #   template: asav.image_properties.xml.j2
+  #   state: absent
 #  - name: centos
 #    image: CentOS-7-x86_64-GenericCloud-1901.qcow2
 #    version: 1901

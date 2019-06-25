@@ -1,0 +1,91 @@
+all:
+  hosts:
+    dut:
+      ansible_host: 192.133.177.26
+      nfvis_bridges:
+        service:
+      nfvis_networks:
+        service:
+          bridge: service
+  children:
+    nfvis:
+      hosts:
+        harness:
+        dut:
+    vnf:
+      hosts:
+        isrv1:
+          ansible_port: 21001
+          ansible_network_os: ios
+          interfaces:
+            GigabitEthernet2:
+              enabled: true
+              ip:
+                primary: 192.168.0.2/24
+                gateway: 192.168.0.1
+            GigabitEthernet3:
+              enabled: true
+              ip:
+                primary: 192.168.1.1/24
+          static_routes:
+            global:
+              - network: 192.168.255.0/24
+                fwd_list:
+                  - fwd: 192.168.1.2
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['dut'].ansible_host }}"
+            image: isrv_16.09.01a
+            flavor: isrv-small
+            bootup_time: 600
+            kpi_data: yes
+            recovery_wait_time: 5
+            interfaces:
+              - network: int-mgmt-net
+              - network: test-wan
+              - network: service
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            config_data:
+              - dst: iosxe_config.txt
+                data: "{{ lookup('template', 'ios/nfvis.j2') }}"
+        asav1:
+          ansible_port: 21002
+          ansible_network_os: asa
+          interfaces:
+            GigabitEthernet0/0:
+              enabled: true
+              nameif: outside
+              security_level: 0
+              ip:
+                primary: 192.168.1.2/24
+            GigabitEthernet0/1:
+              enabled: true
+              nameif: inside
+              security_level: 0
+              ip:
+                primary: 192.168.255.1/24
+          static_routes:
+            outside:
+              - network: 192.168.0.0/24
+                fwd_list:
+                  - fwd: 192.168.1.1
+
+          nfvis:
+            name: "{{ inventory_hostname }}"
+            host: "{{ hostvars['dut'].ansible_host }}"
+            image: asav_9.10.1
+            flavor: asav10
+            bootup_time: 600
+            interfaces:
+              - network: int-mgmt-net
+              - network: service
+              - network: test-lan
+            port_forwarding:
+              - proxy_port: "{{ ansible_port }}"
+                source_bridge: 'wan-br'
+            config_data:
+              - dst: day0-config
+                data: "{{ lookup('template', 'asa/nfvis.j2') }}"
+
